@@ -20,5 +20,5 @@ def git_push(commit_msg="Update via script", branch="main"):
 
 # Customize your message and branch
 if __name__ == "__main__":
-    git_push(commit_msg="Auto update", branch="main")
+    git_push(commit_msg="Auto update")
 
