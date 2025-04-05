@@ -16,7 +16,7 @@ def git_push(commit_msg="Update via script"):
     run_cmd(f'git commit -m "{commit_msg}"')
 
     print("🚀 Pushing to remote...")
-    run_cmd(f"git push origin {branch}")
+    run_cmd(f"git push origin")
 
 # Customize your message and branch
 if __name__ == "__main__":
