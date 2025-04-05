@@ -8,7 +8,7 @@ def run_cmd(command):
         print("[ERROR]", result.stderr)
     return result.returncode == 0
 
-def git_push(commit_msg="Update via script", branch="main"):
+def git_push(commit_msg="Update via script"):
     print("🌀 Staging all changes...")
     run_cmd("git add .")
 
