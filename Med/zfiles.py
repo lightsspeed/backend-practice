@@ -1,7 +1,7 @@
 # create_py_files.py
 
 for i in range(1, 11):
-    filename = f"Tuples{i}.py"
+    filename = f"Slice{i}.py"
     with open(filename, "w") as f:
         f.write(f"# This is {i}.py\n")
 
