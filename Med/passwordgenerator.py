@@ -40,5 +40,5 @@ def generate_password(length=12, use_special_chars=True):
 
     return password 
 
-print(generate_password(12, True))  # Example usage
+print(generate_password(8, True))  # Example usage
 #print(generate_password(16, False))  # Example usage without special characters
