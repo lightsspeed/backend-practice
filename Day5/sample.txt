@@ -1,0 +1,5 @@
+Assume a file 'sample.txt' exists with this content:
+     Hello world
+ This is a TEST line
+Another test here
+No match
