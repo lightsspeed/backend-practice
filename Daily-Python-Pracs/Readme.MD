@@ -11,3 +11,8 @@
    pip install fastapi uvicorn
 
    START CODING
+
+python -m venv venv
+venv\Scripts\activate # (Windows PowerShell or CMD)
+pip install fastapi uvicorn
+uvicorn main:app --reload
