@@ -56,3 +56,48 @@ class F1DataProcessor:
                 json.dump(data, f, indent=2)
         except Exception as e:
             print(f"Cache write error: {e}")
+
+    def _make_api_request(self, endpoint: str, params: Dict = None) -> Optional[Dict]:
+        """Make API request with error handling"""
+        url = f"{self.base_url}/{endpoint}.json"
+        
+        try:
+            response = self.session.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            return response.json()
+        
+        except requests.exceptions.ConnectionError:
+            print("❌ Connection error: Unable to connect to F1 API")
+            return None
+        except requests.exceptions.Timeout:
+            print("❌ Timeout error: Request took too long")
+            return None
+        except requests.exceptions.HTTPError as e:
+            print(f"❌ HTTP error: {e}")
+            return None
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Request error: {e}")
+            return None
+        except json.JSONDecodeError:
+            print("❌ Invalid JSON response from API")
+            return None
+    
+    def get_data(self, endpoint: str, params: Dict = None) -> Optional[Dict]:
+        """Get data with caching mechanism"""
+        cache_file = self._get_cache_filename(endpoint, params)
+        
+        # Try to load from cache first
+        if self._is_cache_valid(cache_file):
+            print(f"📦 Loading from cache: {endpoint}")
+            cached_data = self._load_from_cache(cache_file)
+            if cached_data:
+                return cached_data
+        
+        # Make API request if cache miss or invalid
+        print(f"🌐 Fetching from API: {endpoint}")
+        data = self._make_api_request(endpoint, params)
+        
+        if data:
+            self._save_to_cache(cache_file, data)
+        
+        return data
