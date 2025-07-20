@@ -4,11 +4,11 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - "real_world_scenarios/Cloud_billing_App/code/**"
+      - "real_world_scenarios/Cloud_billing_App/**"
   pull_request:
     branches: [main]
     paths:
-      - "real_world_scenarios/Cloud_billing_App/code/**"
+      - "real_world_scenarios/Cloud_billing_App/**"
   release:
     types: [published]
 
