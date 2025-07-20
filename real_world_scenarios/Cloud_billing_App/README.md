@@ -149,6 +149,16 @@ cloud-billing-calculator/
 ├── cloud_billing_cli.py          # CLI application
 ├── cloud_billing_app.py          # Streamlit web application
 ├── requirements.txt               # Python dependencies
+├── Dockerfile                     # Docker container configuration
+├── docker-compose.yml             # Docker Compose setup
+├── nginx.conf                     # Nginx reverse proxy config
+├── .dockerignore                  # Docker ignore file
+├── .github/                       # GitHub Actions workflows
+│   └── workflows/
+│       └── ci.yml                 # CI/CD pipeline
+├── tests/                         # Test files
+│   ├── __init__.py
+│   └── test_cloud_billing.py     # Unit tests
 ├── README.md                      # Project documentation
 ├── LICENSE                        # MIT license
 ├── .gitignore                     # Git ignore file
@@ -158,7 +168,8 @@ cloud-billing-calculator/
 │   └── cost_charts.png
 └── docs/                          # Additional documentation
     ├── API.md                     # API documentation
-    └── CONTRIBUTING.md            # Contribution guidelines
+    ├── CONTRIBUTING.md            # Contribution guidelines
+    └── DEPLOYMENT.md              # Deployment guide
 ```
 
 ## 🔧 Configuration
@@ -271,9 +282,69 @@ plotly>=5.15.0
 - **Python**: 3.7 or higher
 - **Browser**: Chrome, Firefox, Safari, or Edge (for web interface)
 
+## 🐳 Docker Support
+
+### Quick Start with Docker
+
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+
+# Or run individual container
+docker build -t cloud-billing-calculator .
+docker run -p 8501:8501 cloud-billing-calculator
+```
+
+### Production Deployment
+
+```bash
+# Run with nginx reverse proxy
+docker-compose --profile production up -d
+```
+
+### Docker Hub
+
+Pull the pre-built image:
+
+```bash
+docker pull yourusername/cloud-billing-calculator:latest
+```
+
+## 🚀 CI/CD Pipeline
+
+### GitHub Actions Workflow
+
+- **✅ Automated Testing**: Unit tests, linting, security scans
+- **✅ Multi-platform Builds**: AMD64 and ARM64 Docker images
+- **✅ Security Scanning**: Vulnerability checks with safety and bandit
+- **✅ Code Quality**: Black formatting, isort imports, flake8 linting
+- **✅ Automated Deployment**: Staging and production environments
+- **✅ Container Registry**: Docker Hub and GitHub Container Registry
+
+### Build Status
+
+![CI/CD](https://github.com/yourusername/cloud-billing-calculator/workflows/CI/CD%20Pipeline/badge.svg)
+![Docker](https://img.shields.io/docker/pulls/yourusername/cloud-billing-calculator)
+![Security](https://img.shields.io/badge/security-scanned-green)
+
+### Deployment Environments
+
+- **Development**: Auto-deploy on `develop` branch
+- **Staging**: Auto-deploy on `develop` branch
+- **Production**: Auto-deploy on GitHub releases
+
 ## 🔄 Version History
 
-### v2.0.0 (Current)
+### v3.0.0 (Current)
+
+- ✅ Docker containerization support
+- ✅ GitHub Actions CI/CD pipeline
+- ✅ Multi-platform container builds
+- ✅ Production-ready deployment configs
+- ✅ Automated testing and security scans
+- ✅ Nginx reverse proxy support
+
+### v2.0.0
 
 - ✅ Added Streamlit web interface
 - ✅ Interactive visualizations with Plotly
@@ -298,8 +369,9 @@ plotly>=5.15.0
 - [ ] **Historical Data**: Track costs over time
 - [ ] **Cloud Provider Integration**: Real-time pricing APIs
 - [ ] **Mobile App**: React Native version
-- [ ] **Docker Support**: Containerized deployment
 - [ ] **Database Backend**: Persistent storage for calculations
+- [ ] **Kubernetes Deployment**: Helm charts and K8s manifests
+- [ ] **API Endpoints**: REST API for external integrations
 
 ### Enhancement Ideas
 
