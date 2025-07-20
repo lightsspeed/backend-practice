@@ -13,7 +13,7 @@ on:
     types: [published]
 
 env:
-  PYTHON_VERSION: "3.11"
+  PYTHON_VERSION: "3.14"
   NODE_VERSION: "18"
 
 jobs:
