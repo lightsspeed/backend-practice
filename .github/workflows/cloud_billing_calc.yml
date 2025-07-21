@@ -9,8 +9,16 @@ on:
     branches: [main]
     paths:
       - "backend-practice/Cloud_billing_App/**"
-  release:
-    types: [published]
+  workflow_dispatch:  # Added for manual triggering
+    inputs:
+      environment:
+        description: 'Environment to deploy to (e.g., staging, production)'
+        required: false
+        default: 'staging'
+      ref:
+        description: 'Branch or commit SHA to run the workflow on'
+        required: false
+        default: 'develop'
 
 env:
   PYTHON_VERSION: "3.11"
