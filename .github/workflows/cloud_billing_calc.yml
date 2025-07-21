@@ -4,16 +4,17 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - "real_world_scenarios/Cloud_billing_App/**"
+      - "real-world-scenarios/Cloud_billing_App/**"
   pull_request:
     branches: [main]
     paths:
-      - "real_world_scenarios/Cloud_billing_App/**"
+      - "real-world-scenarios/Cloud_billing_App/**"
   workflow_dispatch:
 
 env:
   PYTHON_VERSION: "3.11"
   NODE_VERSION: "18"
+  WORKING_DIRECTORY: "real-world-scenarios/Cloud_billing_App"
 
 jobs:
   test:
@@ -33,19 +34,19 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('real-world-scenarios/Cloud_billing_App/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
       - name: Install dependencies
-        working-directory: real_world_scenarios/Cloud_billing_App/
-
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov flake8 black isort
 
       - name: Lint with flake8
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           # Stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -53,18 +54,22 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
       - name: Format with black
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           black --check --diff .
 
       - name: Sort imports with isort
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           isort --check-only --diff .
 
       - name: Test CLI application
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           python -c "import cloud_billing_cli; print('CLI module imports successfully')"
 
       - name: Test Streamlit application
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           python -c "import cloud_billing_app; print('Streamlit app imports successfully')"
           # Test if streamlit can load the app without errors
@@ -73,13 +78,14 @@ jobs:
           curl -f http://localhost:8502/_stcore/health || exit 1
 
       - name: Run pytest
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           pytest tests/ --cov=. --cov-report=xml --cov-report=html
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          file: ./coverage.xml
+          file: ${{ env.WORKING_DIRECTORY }}/coverage.xml
           flags: unittests
           name: codecov-umbrella
 
@@ -97,12 +103,14 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install security tools
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           pip install safety bandit
 
       - name: Check for security vulnerabilities
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          safety check
+          safety check -r requirements.txt
           bandit -r . -x tests/
 
   build-docker:
@@ -149,7 +157,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ${{ env.WORKING_DIRECTORY }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -169,6 +177,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy to staging
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           echo "Deploying to staging environment..."
           # Add your staging deployment commands here
@@ -187,6 +196,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy to production
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           echo "Deploying to production environment..."
           # Add your production deployment commands here
@@ -210,16 +220,22 @@ jobs:
         run: |
           # Simple changelog generation
           echo "## Changes" > CHANGELOG.md
-          git log --oneline --no-merges $(git describe --tags --abbrev=0)..HEAD >> CHANGELOG.md
+          git log --oneline --no-merges $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD >> CHANGELOG.md
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
       - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ steps.get_tag.outputs.tag }}
+          release_name: Release ${{ steps.get_tag.outputs.tag }}
           body_path: CHANGELOG.md
           draft: false
           prerelease: false
