@@ -4,11 +4,11 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - "backend-practice/Cloud_billing_App/**"
+      - "backend-practice/real_world_scenarios/Cloud_billing_App" 
   pull_request:
     branches: [main]
     paths:
-      - "backend-practice/Cloud_billing_App/**"
+      - "backend-practice/real_world_scenarios/Cloud_billing_App" 
   workflow_dispatch:  # Added for manual triggering
     inputs:
       environment:
@@ -23,6 +23,7 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   NODE_VERSION: "18"
+  WORKING_DIRECTORY: "backend-practice/real_world_scenarios/Cloud_billing_App"  # Adjust based on your repo structure
 
 jobs:
   test:
