@@ -4,17 +4,17 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - "backend-practice/real_world_scenarios/Cloud_billing_App/**"
+      - "real_world_scenarios/Cloud_billing_App/**"
   pull_request:
     branches: [main]
     paths:
-      - "backend-practice/real_world_scenarios/Cloud_billing_App/**"
+      - "real_world_scenarios/Cloud_billing_App/**"
   workflow_dispatch:
 
 env:
   PYTHON_VERSION: "3.11"
   NODE_VERSION: "18"
-  APP_DIR: "backend-practice/real_world_scenarios/Cloud_billing_App"
+  WORKING_DIRECTORY: "real_world_scenarios/Cloud_billing_App"
 
 jobs:
   test:
@@ -34,21 +34,19 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('backend-practice/real_world_scenarios/Cloud_billing_App/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('real_world_scenarios/Cloud_billing_App/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
       - name: Install dependencies
-        working-directory: ${{ env.APP_DIR }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
+          pip install -r requirements.txt
           pip install pytest pytest-cov flake8 black isort
 
       - name: Lint with flake8
-        working-directory: ${{ env.APP_DIR }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           # Stop the build if there are Python syntax errors or undefined names
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -56,51 +54,38 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
       - name: Format with black
-        working-directory: ${{ env.APP_DIR }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           black --check --diff .
 
       - name: Sort imports with isort
-        working-directory: ${{ env.APP_DIR }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           isort --check-only --diff .
 
       - name: Test CLI application
-        working-directory: ${{ env.APP_DIR }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          if [ -f cloud_billing_cli.py ]; then
-            python -c "import cloud_billing_cli; print('CLI module imports successfully')"
-          else
-            echo "CLI module not found, skipping test"
-          fi
+          python -c "import cloud_billing_cli; print('CLI module imports successfully')"
 
       - name: Test Streamlit application
-        working-directory: ${{ env.APP_DIR }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          if [ -f cloud_billing_app.py ]; then
-            python -c "import cloud_billing_app; print('Streamlit app imports successfully')"
-            # Test if streamlit can load the app without errors
-            timeout 10s streamlit run cloud_billing_app.py --server.headless true --server.port 8502 &
-            sleep 5
-            curl -f http://localhost:8502/_stcore/health || exit 1
-          else
-            echo "Streamlit app not found, skipping test"
-          fi
+          python -c "import cloud_billing_app; print('Streamlit app imports successfully')"
+          # Test if streamlit can load the app without errors
+          timeout 10s streamlit run cloud_billing_app.py --server.headless true --server.port 8502 &
+          sleep 5
+          curl -f http://localhost:8502/_stcore/health || exit 1
 
       - name: Run pytest
-        working-directory: ${{ env.APP_DIR }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          if [ -d tests/ ]; then
-            pytest tests/ --cov=. --cov-report=xml --cov-report=html
-          else
-            echo "No tests directory found, skipping pytest"
-          fi
+          pytest tests/ --cov=. --cov-report=xml --cov-report=html
 
       - name: Upload coverage to Codecov
-        if: hashFiles('backend-practice/real_world_scenarios/Cloud_billing_App/coverage.xml') != ''
         uses: codecov/codecov-action@v3
         with:
-          file: ./backend-practice/real_world_scenarios/Cloud_billing_App/coverage.xml
+          file: ${{ env.WORKING_DIRECTORY }}/coverage.xml
           flags: unittests
           name: codecov-umbrella
 
@@ -117,19 +102,21 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Install dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
       - name: Install security tools
         run: |
           pip install safety bandit
 
       - name: Check for security vulnerabilities
-        working-directory: ${{ env.APP_DIR }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
-          if [ -f requirements.txt ]; then
-            safety check -r requirements.txt
-          else
-            echo "No requirements.txt found, skipping safety check"
-          fi
-          bandit -r . -x tests/ || echo "Bandit scan completed with warnings"
+          safety check -r requirements.txt
+          bandit -r . -x tests/
 
   build-docker:
     name: Build Docker Image
@@ -140,28 +127,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check if Dockerfile exists
-        id: dockerfile_check
-        run: |
-          if [ -f "${{ env.APP_DIR }}/Dockerfile" ]; then
-            echo "dockerfile_exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "dockerfile_exists=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Set up Docker Buildx
-        if: steps.dockerfile_check.outputs.dockerfile_exists == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
-        if: github.event_name != 'pull_request' && steps.dockerfile_check.outputs.dockerfile_exists == 'true'
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Login to GitHub Container Registry
-        if: github.event_name != 'pull_request' && steps.dockerfile_check.outputs.dockerfile_exists == 'true'
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -169,13 +146,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata
-        if: steps.dockerfile_check.outputs.dockerfile_exists == 'true'
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ github.repository }}
-            ghcr.io/${{ github.repository }}
+            ${{ github.repository }}-cloud-billing
+            ghcr.io/${{ github.repository }}-cloud-billing
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -184,20 +160,15 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
-        if: steps.dockerfile_check.outputs.dockerfile_exists == 'true'
         uses: docker/build-push-action@v5
         with:
-          context: ${{ env.APP_DIR }}
+          context: ${{ env.WORKING_DIRECTORY }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Skip Docker build
-        if: steps.dockerfile_check.outputs.dockerfile_exists == 'false'
-        run: echo "No Dockerfile found, skipping Docker build"
 
   deploy-staging:
     name: Deploy to Staging
@@ -211,6 +182,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy to staging
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           echo "Deploying to staging environment..."
           # Add your staging deployment commands here
@@ -229,6 +201,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy to production
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           echo "Deploying to production environment..."
           # Add your production deployment commands here
@@ -249,15 +222,11 @@ jobs:
 
       - name: Generate changelog
         id: changelog
+        working-directory: ${{ env.WORKING_DIRECTORY }}
         run: |
           # Simple changelog generation
           echo "## Changes" > CHANGELOG.md
-          if git describe --tags --abbrev=0 2>/dev/null; then
-            git log --oneline --no-merges $(git describe --tags --abbrev=0)..HEAD >> CHANGELOG.md
-          else
-            echo "Initial release" >> CHANGELOG.md
-            git log --oneline --no-merges >> CHANGELOG.md
-          fi
+          git log --oneline --no-merges $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD -- . >> CHANGELOG.md
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
@@ -267,6 +236,6 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
-          body_path: CHANGELOG.md
+          body_path: ${{ env.WORKING_DIRECTORY }}/CHANGELOG.md
           draft: false
           prerelease: false
