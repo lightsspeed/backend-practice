@@ -24,6 +24,6 @@ This is a beginner-friendly FastAPI project that:
 ### 1. Clone the Repo
 
 ```bash
-git clone https://github.com/lightsspeed/fastapi-user-auth.git
-cd fastapi-user-auth
+git clone https://github.com/lightsspeed/backend-practice/login and otp/
+cd login and otp/
 ```
